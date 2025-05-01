@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-
+from django.contrib.auth.models import User
 
 GENDER_CHOICES = [
     ('M', 'Male'),
@@ -13,6 +13,7 @@ class Doctor(models.Model):
     specialization = models.TextField(max_length=250)
     years_of_experience = models.IntegerField()
     hospital_affiliation = models.TextField(max_length=250)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
