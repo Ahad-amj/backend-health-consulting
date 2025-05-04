@@ -1,10 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status, permissions
-from .models import Doctor, Medicine, Review
-from .serializers import DoctorSerializer, MedicineSerializer, ReviewSerializer, UserSerializer
+from .models import Doctor, Medicine, Review, Patient
+from .serializers import DoctorSerializer, MedicineSerializer, ReviewSerializer, UserSerializer, PatientSerializer
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 
 class Home(APIView):
@@ -45,52 +46,146 @@ class MedicineIndex(generics.ListCreateAPIView):
 
 class ReviewListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, doctor_id):
-        reviews = Review.objects.filter(doctor_id=doctor_id)
+        reviews = Review.objects.filter(doctor=doctor_id)
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data)
 
     def post(self, request, doctor_id):
-        print("DATA RECEIVED:", request.data)
         data = request.data.copy()
         data['doctor'] = doctor_id
         serializer = ReviewSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        print("ERRORS:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, doctor_id):
+        review_id = request.data.get("id")
+        if not review_id:
+            return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        review = get_object_or_404(Review, id=review_id, doctor_id=doctor_id)
+
+        if review.patient.user != request.user:
+            return Response({'error': 'You are not authorized to edit this review'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ReviewSerializer(review, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, doctor_id):
+        review_id = request.data.get("id")
+        if not review_id:
+            return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        review = get_object_or_404(Review, id=review_id, doctor_id=doctor_id)
+
+        if review.patient.user != request.user:
+            return Response({'error': 'You are not authorized to delete this review'}, status=status.HTTP_403_FORBIDDEN)
+
+        review.delete()
+        return Response({'success': True}, status=status.HTTP_204_NO_CONTENT)
+        
     
+class ReviewReplyUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, review_id):
+        review = get_object_or_404(Review, id=review_id)
+
+        if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
+            return Response({'error': 'You are not authorized to reply to this review'}, status=status.HTTP_403_FORBIDDEN)
+
+        reply = request.data.get('reply')
+        if reply is None:
+            return Response({'error': 'Reply content is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        review.reply = reply
+        review.save()
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, review_id):
+        review = get_object_or_404(Review, id=review_id)
+
+        if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
+            return Response({'error': 'You are not authorized to delete this reply'}, status=status.HTTP_403_FORBIDDEN)
+
+        review.reply = ''
+        review.save()
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class LoginView(APIView):
-
   def post(self, request):
     try:
       username = request.data.get('username')
       password = request.data.get('password')
       user = authenticate(username=username, password=password)
+
       if user:
+        role = 'unknown'
+        if hasattr(user, 'doctor'):
+          role = 'doctor'
+        elif hasattr(user, 'patient'):
+          role = 'patient'
+
         refresh = RefreshToken.for_user(user)
-        content = {'refresh': str(refresh), 'access': str(refresh.access_token),'user': UserSerializer(user).data}
+        content = {
+          'refresh': str(refresh),
+          'access': str(refresh.access_token),
+          'user': UserSerializer(user).data,
+          'role': role
+        }
         return Response(content, status=status.HTTP_200_OK)
+
       return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as err:
       return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+
 class CreateUserView(generics.CreateAPIView):
   queryset = User.objects.all()
   serializer_class = UserSerializer
 
   def create(self, request, *args, **kwargs):
     try:
+      role = request.data.get('role')  
       response = super().create(request, *args, **kwargs)
       user = User.objects.get(username=response.data['username'])
+
+      if role == 'doctor':
+        Doctor.objects.create(
+          user=user,
+          name=request.data.get('name'),
+          gender=request.data.get('gender'),
+          specialization=request.data.get('specialization'),
+          years_of_experience=request.data.get('years_of_experience'),
+          hospital_affiliation=request.data.get('hospital_affiliation')
+        )
+      elif role == 'patient':
+        Patient.objects.create(
+          user=user,
+          name=request.data.get('name'),
+          gender=request.data.get('gender')
+        )
+
       refresh = RefreshToken.for_user(user)
-      content = {'refresh': str(refresh), 'access': str(refresh.access_token), 'user': response.data }
+      content = {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'user': response.data,
+        'role': role
+      }
       return Response(content, status=status.HTTP_201_CREATED)
     except Exception as err:
-      return Response({ 'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+      return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class VerifyUserView(APIView):
   permission_classes = [permissions.IsAuthenticated]
@@ -105,3 +200,26 @@ class VerifyUserView(APIView):
         return Response({"detail": "Failed to generate token.", "error": str(token_error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as err:
       return Response({"detail": "Unexpected error occurred.", "error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class DoctorProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+            serializer = DoctorSerializer(doctor)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Doctor.DoesNotExist:
+            return Response({'error': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+class PatientProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            patient = Patient.objects.get(user=request.user)
+            serializer = PatientSerializer(patient)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Patient.DoesNotExist:
+            return Response({'error': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
