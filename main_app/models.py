@@ -53,14 +53,14 @@ class Review(models.Model):
         return f"Review for {self.doctor.name} - Rating: {self.rating}"
     
 
-# class Prescription(models.Model):
-#     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='prescriptions')
-#     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='prescriptions')
-#     medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')
-#     date_prescribed = models.DateField(auto_now_add=True)
+class Prescription(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='prescriptions')
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='prescriptions')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='prescriptions')
+    date_prescribed = models.DateField(auto_now_add=True)
 
-#     def __str__(self):
-#         return f"{self.patient.name} - {self.medicine.name} by {self.doctor.name}"t
+    def __str__(self):
+        return f"{self.patient.name} - {self.medicine.name} by {self.doctor.name}"
 
 
 # INSERT INTO main_app_doctor 
