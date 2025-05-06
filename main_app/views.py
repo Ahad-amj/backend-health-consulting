@@ -163,57 +163,55 @@ class ReviewListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, doctor_id):
-        reviews = Review.objects.filter(doctor=doctor_id)
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response(serializer.data)
+        try:
+            reviews = Review.objects.filter(doctor=doctor_id)
+            serializer = ReviewSerializer(reviews, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, doctor_id):
-        data = request.data.copy()
-        data['doctor'] = doctor_id
-        patient = getattr(request.user, 'patient', None)
-        data['patient'] = patient
-        # if not patient:
-        #     return Response({'error': 'Only patients can leave reviews'}, status=status.HTTP_403_FORBIDDEN)
-        # data['patient'] = patient.id
-    
-        serializer = ReviewSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            data = request.data.copy()
+            data['doctor'] = doctor_id
+            patient = getattr(request.user, 'patient', None)
+            data['patient'] = patient
+
+            serializer = ReviewSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def put(self, request, doctor_id):
-        review_id = request.data.get(id=review_id)
-        # if not review_id:
-        #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            review_id = request.data.get('id')
+            # if not review_id:
+            #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        review = get_object_or_404(Review, id=review_id, doctor=doctor_id)
-        # review = Review.objects.get(doctor=doctor_id)
-
-        # print(review.patient.user, request.user)
-        # if review.patient.user != request.user:
-        #     return Response({'error': 'You are not authorized to edit this review'}, status=status.HTTP_403_FORBIDDEN)
-
-        serializer = ReviewSerializer(review, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+            review = get_object_or_404(Review, id=review_id, doctor=doctor_id)
+            serializer = ReviewSerializer(review, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, doctor_id):
-        review_id = request.data.get(id=review_id)
-        # if not review_id:
-        #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            review_id = request.data.get('id')
+            # if not review_id:
+            #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        review = get_object_or_404(Review, id=review_id, doctor=doctor_id)
-        # review = Review.objects.get(doctor=doctor_id)
+            review = get_object_or_404(Review, id=review_id, doctor=doctor_id)
+            review.delete()
+            return Response({'success': True}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # if review.patient.user != request.user:
-        #     return Response({'error': 'You are not authorized to delete this review'}, status=status.HTTP_403_FORBIDDEN)
-
-        review.delete()
-        return Response({'success': True}, status=status.HTTP_204_NO_CONTENT)
   
 
         
@@ -222,53 +220,59 @@ class ReviewReplyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, doctor_id):
-        reviews = Review.objects.filter(doctor=doctor_id)
-        print(reviews)
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response(serializer.data)
+        try:
+            reviews = Review.objects.filter(doctor=doctor_id)
+            serializer = ReviewSerializer(reviews, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, review_id):
-        review = get_object_or_404(Review, id=review_id)
-    
-        if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
-            return Response({'error': 'You are not authorized to reply to this review'}, status=status.HTTP_403_FORBIDDEN)
-    
-        reply = request.data.get('reply')
-        if not reply:
-            return Response({'error': 'Reply content is required'}, status=status.HTTP_400_BAD_REQUEST)
-    
-        review.reply = reply
-        review.save()
-    
-        serializer = ReviewSerializer(review)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        try:
+            review = get_object_or_404(Review, id=review_id)
+            if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
+                return Response({'error': 'You are not authorized to reply to this review'}, status=status.HTTP_403_FORBIDDEN)
+
+            reply = request.data.get('reply')
+            if not reply:
+                return Response({'error': 'Reply content is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            review.reply = reply
+            review.save()
+            serializer = ReviewSerializer(review)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def put(self, request, review_id):
-        review = get_object_or_404(Review, id=review_id)
+        try:
+            review = get_object_or_404(Review, id=review_id)
+            if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
+                return Response({'error': 'You are not authorized to update this reply'}, status=status.HTTP_403_FORBIDDEN)
 
-        if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
-            return Response({'error': 'You are not authorized to reply to this review'}, status=status.HTTP_403_FORBIDDEN)
+            reply = request.data.get('reply')
+            if reply is None:
+                return Response({'error': 'Reply content is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        reply = request.data.get('reply')
-        if reply is None:
-            return Response({'error': 'Reply content is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        review.reply = reply
-        review.save()
-        serializer = ReviewSerializer(review)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            review.reply = reply
+            review.save()
+            serializer = ReviewSerializer(review)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, review_id):
-        review = get_object_or_404(Review, id=review_id)
+        try:
+            review = get_object_or_404(Review, id=review_id)
+            if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
+                return Response({'error': 'You are not authorized to delete this reply'}, status=status.HTTP_403_FORBIDDEN)
 
-        if not hasattr(request.user, 'doctor') or review.doctor.user != request.user:
-            return Response({'error': 'You are not authorized to delete this reply'}, status=status.HTTP_403_FORBIDDEN)
-
-        review.reply = ''
-        review.save()
-        serializer = ReviewSerializer(review)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            review.reply = ''
+            review.save()
+            serializer = ReviewSerializer(review)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
     
