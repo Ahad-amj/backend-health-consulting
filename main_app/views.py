@@ -113,20 +113,21 @@ class PatientProfileView(APIView):
    
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request):
-        try:
-            patient = Patient.objects.get(user=request.user)
-            serializer = PatientSerializer(patient)
-            prescriptions = Prescription.objects.filter(patient=patient.id)
-            return Response({
-                   "patient": serializer.data,
-                   "prescriptions": PrescriptionSerializer(prescriptions, many=True).data,
-               }, status=status.HTTP_200_OK)
+    def get(self, request, doctor_id):
+      try:
+        # Ensure doctor exists (optional, for validation)
+        doctor = Doctor.objects.get(id=doctor_id)
+
+        # Get all patients linked to the doctor
+        patients = Patient.objects.filter(doctor=doctor)
+        serializer = PatientSerializer(patients, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+      except Doctor.DoesNotExist:
+        return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
     
-            # return Response(serializer.data, status=status.HTTP_200_OK)
-        except Patient.DoesNotExist:
-            return Response({'error': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
-        
+    
 class DoctorsIndex(APIView):
   permission_classes = [permissions.IsAuthenticated]
   serializer_class = DoctorSerializer
@@ -241,6 +242,7 @@ class ReviewReplyView(APIView):
     
         serializer = ReviewSerializer(review)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
     def put(self, request, review_id):
         review = get_object_or_404(Review, id=review_id)
@@ -291,6 +293,8 @@ class PrescribeMedicineView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
 
     def put(self, request, prescription_id):
         try:
