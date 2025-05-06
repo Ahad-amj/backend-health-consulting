@@ -100,18 +100,30 @@ class DoctorProfileView(APIView):
         try:
             doctor = Doctor.objects.get(user=request.user)
             serializer = DoctorSerializer(doctor)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            prescriptions = Prescription.objects.filter(doctor=doctor.id)
+            return Response({
+                   "doctor": serializer.data,
+                   "prescriptions": PrescriptionSerializer(prescriptions, many=True).data,
+               }, status=status.HTTP_200_OK)
+            # return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
             return Response({'error': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
 class PatientProfileView(APIView):
+   
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         try:
             patient = Patient.objects.get(user=request.user)
             serializer = PatientSerializer(patient)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            prescriptions = Prescription.objects.filter(patient=patient.id)
+            return Response({
+                   "patient": serializer.data,
+                   "prescriptions": PrescriptionSerializer(prescriptions, many=True).data,
+               }, status=status.HTTP_200_OK)
+    
+            # return Response(serializer.data, status=status.HTTP_200_OK)
         except Patient.DoesNotExist:
             return Response({'error': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -151,16 +163,13 @@ class ReviewListCreateView(APIView):
 
     def get(self, request, doctor_id):
         reviews = Review.objects.filter(doctor=doctor_id)
-        print(reviews)
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data)
 
     def post(self, request, doctor_id):
         data = request.data.copy()
-        print(data)
         data['doctor'] = doctor_id
         patient = getattr(request.user, 'patient', None)
-        print(patient)
         data['patient'] = patient
         # if not patient:
         #     return Response({'error': 'Only patients can leave reviews'}, status=status.HTTP_403_FORBIDDEN)
@@ -173,7 +182,7 @@ class ReviewListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, doctor_id):
-        review_id = request.data.get("id")
+        review_id = request.data.get(id=review_id)
         # if not review_id:
         #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -192,7 +201,7 @@ class ReviewListCreateView(APIView):
     
 
     def delete(self, request, doctor_id):
-        review_id = request.data.get("id")
+        review_id = request.data.get(id=review_id)
         # if not review_id:
         #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -260,12 +269,13 @@ class ReviewReplyView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
+    
 class PrescribeMedicineView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, doctor_id):
         prescriptions = Prescription.objects.filter(doctor=doctor_id)
+        print(prescriptions)
         serializer = PrescriptionSerializer(prescriptions, many=True)
         return Response(serializer.data)
 
@@ -282,12 +292,12 @@ class PrescribeMedicineView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, pk):
+    def put(self, request, prescription_id):
         try:
-            prescription = Prescription.objects.get(pk=pk)
+            prescription = Prescription.objects.get(prescription_id=prescription_id)
             medicine_id = request.data.get('medicine_id')
             if medicine_id:
-                medicine = Medicine.objects.get(pk=medicine_id)
+                medicine = Medicine.objects.get(prescription_id=medicine_id)
                 prescription.medicine = medicine
                 prescription.save()
 
@@ -297,9 +307,9 @@ class PrescribeMedicineView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
+    def delete(self, request, prescription_id):
         try:
-            prescription = Prescription.objects.get(pk=pk)
+            prescription = Prescription.objects.get(prescription_id=prescription_id)
             prescription.delete()
             return Response({"message": "Prescription deleted."}, status=status.HTTP_204_NO_CONTENT)
 

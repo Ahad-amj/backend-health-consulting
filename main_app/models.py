@@ -32,7 +32,6 @@ class Medicine(models.Model):
 class Patient(models.Model):
     name = models.CharField(max_length=100)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default=GENDER_CHOICES[0][0])
-    prescription = models.TextField(blank=True)
     doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, related_name='patients')
     medicines = models.ManyToManyField(Medicine, related_name='patients', blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
