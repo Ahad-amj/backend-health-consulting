@@ -302,10 +302,10 @@ class PrescribeMedicineView(APIView):
 
     def put(self, request, prescription_id):
         try:
-            prescription = Prescription.objects.get(prescription_id=prescription_id)
+            prescription = Prescription.objects.get(prescription=prescription_id)
             medicine_id = request.data.get('medicine_id')
             if medicine_id:
-                medicine = Medicine.objects.get(prescription_id=medicine_id)
+                medicine = Medicine.objects.get(prescription=medicine_id)
                 prescription.medicine = medicine
                 prescription.save()
 
