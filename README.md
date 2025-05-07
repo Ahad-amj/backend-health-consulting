@@ -5,7 +5,6 @@ The **Health Consulting App** is a full-stack web platform that enables seamless
 
 ### 👨‍⚕️ For Doctors:
 - View and manage comments received from patients
-- Reply to patient messages
 - View ratings and feedback
 - Prescribe medicines
 
@@ -13,8 +12,6 @@ The **Health Consulting App** is a full-stack web platform that enables seamless
 - Search and view doctors' profiles
 - Leave comments and ratings for doctors
 - Edit or delete own comments
-- Receive replies from doctors
-- Browse and purchase available medicines
 
 This platform aims to improve healthcare access by connecting users to trusted professionals, making communication, consultation, and prescriptions more efficient and digital-first.
 
@@ -95,13 +92,47 @@ It handles authentication, business logic, API endpoints, and communication with
 | Add Review           | POST   | `/doctors/<id>/reviews/`         | Submit comment & rating              |
 | Edit Review          | PUT    | `/reviews/<id>/`                 | Edit your own comment or rating      |
 | Delete Review        | DELETE | `/reviews/<id>/`                 | Delete your own comment or rating    |
-| Doctor Reply         | POST   | `/reviews/<id>/reply/`           | Doctor replies to a review           |
 
+
+### 💊 Prescription Endpoints
+
+| Action                   | Method | URL                                                                 | Description                                      |
+|--------------------------|--------|----------------------------------------------------------------------|--------------------------------------------------|
+| Prescribe Medicine       | POST   | `/patients/<patient_id>/medicines/<medicine_id>/prescribe/`         | Doctor prescribes a medicine to a patient       |
+| List Patient Prescriptions | GET    | `/prescriptions/patients/<patient_id>/`                              | View all prescriptions for a specific patient   |
+| List Doctor Prescriptions | GET    | `/doctors/<doctor_id>/prescriptions/`                                | View all prescriptions created by a doctor      |
+| View Prescription Detail | GET    | `/prescriptions/<prescription_id>/`                                  | View details of a specific prescription         |
+| Edit Prescription        | PUT    | `/prescriptions/<prescription_id>/`                                  | Edit a prescription (usually by the doctor)     |
+| Delete Prescription      | DELETE | `/prescriptions/<prescription_id>/`                                  | Delete a prescription (usually by the doctor)   |
 ---
 
-## 🚀 Installation Instructions (Docker)
+### Backend Installation (Docker) 🖥️
 
-## ❄️ IceBox Features
+```bash
+1. **Clone the Repository**  
+   git clone <your-repository-url>  
+   cd <your-project-folder>
+
+2. **Build the Docker Image**  
+   docker build -t backend .
+
+3. **Create .env File**  
+   Make sure you have an .env file with the necessary environment variables.
+
+4. **Run the Docker Containers**  
+   docker-compose up -d
+
+5. **Migrate Database**  
+   docker-compose exec backend python manage.py migrate
+
+6. **Access the Backend**  
+   The backend should now be running on localhost:8000 (or another specified port).
+
+7. **Stopping the Docker Containers**  
+   docker-compose down
+```
+
+## ❄️ IceBox Features 
 
 - Create a **medicine purchase API** with order management and payment integration (e.g., Stripe).
 - Store **hospital location data** and add an endpoint to return the **nearest hospital** to a given patient using geolocation.
@@ -109,3 +140,4 @@ It handles authentication, business logic, API endpoints, and communication with
 - Add notification/email support for purchases and doctor replies.
 - Add search/filter API endpoints for doctors and medicines.
 - Introduce rate-limiting and request throttling to improve security.
+- Add **doctor reply functionality** to allow doctors to reply to patient messages.
