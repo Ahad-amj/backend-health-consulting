@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Home, DoctorsIndex, DoctorDetail, MedicineIndex, ReviewListCreateView, CreateUserView, LoginView, VerifyUserView, ReviewReplyView, PrescribeMedicineView, PatientProfileView
+from .views import Home, DoctorsIndex, DoctorDetail, MedicineIndex, ReviewListCreateView, CreateUserView, LoginView, PatientsPrescriptionsView, VerifyUserView, ReviewReplyView, PrescribeMedicineView, PatientProfileView, PrescriptionDetailView
 
 urlpatterns = [
   path('', Home.as_view(), name='home'),
@@ -11,7 +11,8 @@ urlpatterns = [
   path('reviews/<int:review_id>/reply/', ReviewReplyView.as_view(), name='review-reply'),
   path('doctors/<int:doctor_id>/prescriptions/', PrescribeMedicineView.as_view(), name='doctor-prescription'),
   path('patients/<int:patient_id>/medicines/<int:medicine_id>/prescribe/', PrescribeMedicineView.as_view(), name='prescribe-medicine'),
-  path('prescriptions/<int:prescription_id>/', PrescribeMedicineView.as_view(), name='prescription-detail'),
+  path('prescriptions/<int:prescription_id>/', PrescriptionDetailView.as_view(), name='prescribe-detail'),
+  path('prescriptions/patients/<int:patient_id>/', PatientsPrescriptionsView.as_view(), name='patient-prescriptions-detail'),
   path('users/signup/', CreateUserView.as_view(), name='signup'),
   path('users/login/', LoginView.as_view(), name='login'),
   path('users/token/refresh/', VerifyUserView.as_view(), name='token_refresh'),

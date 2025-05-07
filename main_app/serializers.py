@@ -43,6 +43,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     
 class PrescriptionSerializer(serializers.ModelSerializer):
     patient = PatientSerializer(read_only=True)
+    doctor = DoctorSerializer(read_only=True)
+    medicine = MedicineSerializer(read_only=True)
+
     class Meta:
         model = Prescription
         fields = '__all__'

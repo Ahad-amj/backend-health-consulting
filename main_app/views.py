@@ -149,7 +149,10 @@ class DoctorDetail(APIView):
     try:
         queryset = Doctor.objects.get(id=doctor_id)
         doctor = DoctorSerializer(queryset)
-        return Response(doctor.data, status=status.HTTP_200_OK)
+        patientQuery = Patient.objects.filter(doctor=doctor_id)
+        patientSerial = PatientSerializer(patientQuery, many=True)
+        print(patientSerial.data, "test patient data")
+        return Response({"doctor": doctor.data, "patients": patientSerial.data}, status=status.HTTP_200_OK)
     except Exception as err:
         return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -281,7 +284,6 @@ class PrescribeMedicineView(APIView):
 
     def get(self, request, doctor_id):
         prescriptions = Prescription.objects.filter(doctor=doctor_id)
-        print(prescriptions)
         serializer = PrescriptionSerializer(prescriptions, many=True)
         return Response(serializer.data)
 
@@ -323,3 +325,44 @@ class PrescribeMedicineView(APIView):
 
         except Prescription.DoesNotExist:
             return Response({"error": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+  
+class PrescriptionDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, prescription_id):
+        try:
+            prescription = Prescription.objects.get(id=prescription_id)
+            serializer = PrescriptionSerializer(prescription)
+            return Response(serializer.data)
+        except Prescription.DoesNotExist:
+            return Response({'error': 'Prescription not found'}, status=404)
+
+    # def put(self, request, prescription_id):
+    #     try:
+    #         prescription = Prescription.objects.get(id=prescription_id)
+    #         serializer = PrescriptionSerializer(prescription, data=request.data, partial=True)
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return Response(serializer.data)
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     except Prescription.DoesNotExist:
+    #         return Response({'error': 'Prescription not found'}, status=404)
+        
+    def delete(self, request, prescription_id):
+        try:
+            prescription = Prescription.objects.get(id=prescription_id)
+            prescription.delete()
+            return Response({'message': 'Prescription deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Prescription.DoesNotExist:
+            return Response({'error': 'Prescription not found'}, status=404)
+
+        
+class PatientsPrescriptionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, patient_id):
+        prescriptions = Prescription.objects.filter(patient=patient_id)
+        serializer = PrescriptionSerializer(prescriptions, many=True)
+        return Response(serializer.data)
+       
