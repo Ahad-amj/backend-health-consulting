@@ -61,26 +61,3 @@ class Prescription(models.Model):
     def __str__(self):
         return f"{self.patient.name} - {self.medicine.name} by {self.doctor.name}"
 
-
-# INSERT INTO main_app_doctor 
-# VALUES
-# (DEFAULT,'Dr. Ahmed Al-Qahtani', 'M', 'Cardiology', 10, 'King Faisal Specialist Hospital', 1),
-# (DEFAULT,'Dr. Nora Al-Shehri', 'F', 'Dermatology', 8, 'King Khalid University Hospital', 2),
-# (DEFAULT,'Dr. Faisal Al-Dosari', 'M', 'Neurology', 12, 'Riyadh Military Hospital', 3),
-# (DEFAULT,'Dr. Amani Al-Harbi', 'F', 'Pediatrics', 7, 'King Fahd Medical City', 4),
-# (DEFAULT,'Dr. Saleh Al-Zahrani', 'M', 'Orthopedics', 15, 'King Saud Medical City', 5),
-# (DEFAULT,'Dr. Reem Al-Otaibi', 'F', 'Gynecology', 11, 'King Khalid Hospital', 6),
-# (DEFAULT,'Dr. Majed Al-Mutairi', 'M', 'Psychiatry', 9, 'Security Forces Hospital', 7),
-# (DEFAULT,'Dr. Huda Al-Juhani', 'F', 'Ophthalmology', 6, 'National Guard Hospital', 8),
-# (DEFAULT,'Dr. Turki Al-Fahad', 'M', 'General Surgery', 13, 'Al-Mouwasat Hospital', 9),
-# (DEFAULT,'Dr. Lama Al-Saleh', 'F', 'Endocrinology', 10, 'Dr. Sulaiman Al Habib Hospital', 10),
-# (DEFAULT,'Dr. Khaled Al-Shammari', 'M', 'Urology', 14, 'King Abdullah Medical City', 11),
-# (DEFAULT,'Dr. Sarah Al-Qahtani', 'F', 'Internal Medicine', 9, 'Dallah Hospital', 12),
-# (DEFAULT,'Dr. Badr Al-Anazi', 'M', 'ENT', 8, 'King Saud University Medical City', 13),
-# (DEFAULT,'Dr. Muna Al-Hazza', 'F', 'Family Medicine', 7, 'International Medical Center', 14),
-# (DEFAULT,'Dr. Nasser Al-Otaibi', 'M', 'Oncology', 16, 'Saudi German Hospital', 15),
-# (DEFAULT,'Dr. Dana Al-Amri', 'F', 'Radiology', 5, 'Al Hammadi Hospital', 16),
-# (DEFAULT,'Dr. Mishal Al-Rashid', 'M', 'Gastroenterology', 12, 'King Fahad Armed Forces Hospital', 17),
-# (DEFAULT,'Dr. Wafa Al-Faraj', 'F', 'Nephrology', 10, 'Prince Sultan Military Medical City', 18),
-# (DEFAULT,'Dr. Sami Al-Ghamdi', 'M', 'Pulmonology', 11, 'King Salman Hospital', 19),
-# (DEFAULT,'Dr. Rania Al-Dossary', 'F', 'Rheumatology', 6, 'Riyadh Care Hospital', 20);

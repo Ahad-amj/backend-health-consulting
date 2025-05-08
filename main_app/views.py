@@ -105,7 +105,6 @@ class DoctorProfileView(APIView):
                    "doctor": serializer.data,
                    "prescriptions": PrescriptionSerializer(prescriptions, many=True).data,
                }, status=status.HTTP_200_OK)
-            # return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
             return Response({'error': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -115,10 +114,7 @@ class PatientProfileView(APIView):
 
     def get(self, request, doctor_id):
       try:
-        # Ensure doctor exists (optional, for validation)
         doctor = Doctor.objects.get(id=doctor_id)
-
-        # Get all patients linked to the doctor
         patients = Patient.objects.filter(doctor=doctor)
         serializer = PatientSerializer(patients, many=True)
 
@@ -210,20 +206,6 @@ class ReviewDetailView(APIView):
             return Response({'message': 'review deleted successfully'}, status=204)
         except Review.DoesNotExist:
             return Response({'error': 'review not found'}, status=404)
-       
-        # try:
-        #     review_id = request.data.get('id')
-        #     # if not review_id:
-        #     #     return Response({'error': 'Review ID is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        #     review = get_object_or_404(Review, id=review_id, doctor=doctor_id)
-        #     review.delete()
-        #     return Response({'success': True}, status=status.HTTP_204_NO_CONTENT)
-        # except Exception as e:
-        #     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-  
-
 
     
 class PrescribeMedicineView(APIView):
